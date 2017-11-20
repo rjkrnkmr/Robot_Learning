@@ -1,0 +1,37 @@
+import numpy as np
+
+def my_ctl(ctl, q, qd, q_ds, qd_ds, qdd_ds, q_histy, q_dshisty, grvty, coriolis, M):
+
+    KP = np.diag([60, 30])
+    KD = np.diag([10, 6])
+    KI = np.diag([0.1, 0.1])
+
+   # if my_ctl.err == None:
+   #    my_ctl.err = np.zeros(q.shape)
+
+    if ctl == 'P':
+        u = KP * np.mat(q_ds - q).transpose()
+
+    elif ctl == 'PD':
+        u = np.dot(np.vstack(np.hstack([KP, KD])), np.vstack(np.hstack([q_ds - q, qd_ds - qd])))
+
+    elif ctl == 'PID':
+        my_ctl.err = my_ctl.err + (q_ds - q)
+        u = np.dot(np.vstack(np.hstack([KP, KD, KI])), 
+                   np.vstack(np.hstack([q_ds - q, qd_ds - qd, my_ctl.err])))
+
+    elif ctl == 'PD_Grav':
+        u = np.dot(np.vstack(np.hstack([KP, KD])), 
+                   np.vstack(np.hstack([q_ds - q, qd_ds - qd])))
+        u = u + np.array(grvty, ndmin=2).transpose()
+
+    elif ctl == 'ModelBased':
+        qdd_ds =  np.array(qdd_ds, ndmin=2).transpose()
+        qdd_ds = qdd_ds + np.dot(np.vstack(np.hstack([KP, KD])), 
+                                   np.vstack(np.hstack([q_ds - q, qd_ds - qd])))
+        u = M * qdd_ds + np.array(coriolis, ndmin=2).transpose() + np.array(grvty, ndmin=2).transpose()
+
+    return u
+
+
+my_ctl.err = None
